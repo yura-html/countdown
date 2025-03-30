@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>行事カウントダウン</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* スタイル部分は変更なし（前回と同じ） */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+        .event {
+            position: relative;
+            margin: 15px 0;
+            padding: 15px 15px 15px 25px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            background-color: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s ease;
+            border-left: 5px solid #4a6bdf;
+        }
+        .event:hover {
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .event-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .event-info h3 {
+            margin: 0 0 5px 0;
+            font-size: 16px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .event-date {
+            color: #666;
+            font-size: 13px;
+        }
+        .countdown {
+            font-size: 22px;
+            font-weight: 600;
+            margin: 0 15px;
+            min-width: 80px;
+            text-align: center;
+        }
+        .today {
+            color: #e74c3c;
+            font-weight: 700;
+        }
+        .menu-btn {
+            background: none;
+            border: none;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            cursor: pointer;
+            color: #888;
+            transition: all 0.2s ease;
+        }
+        .menu-btn:hover {
+            background-color: #f0f0f0;
+            color: #555;
+        }
+        .menu-options {
+            display: none;
+            position: absolute;
+            top: 40px;
+            right: 10px;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            z-index: 10;
+            min-width: 140px;
+            overflow: hidden;
+        }
+        .menu-option {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #333;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .menu-option:last-child {
+            border-bottom: none;
+        }
+        .menu-option:hover {
+            background-color: #f8f8f8;
+        }
+        .menu-option-icon {
+            margin-right: 8px;
+            width: 16px;
+            text-align: center;
+        }
+        .add-btn {
+            background-color: #4a6bdf;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+        .add-btn:hover {
+            background-color: #3a5bd9;
+        }
+        .add-icon {
+            margin-right: 6px;
+            font-size: 16px;
+        }
+        .input-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .input-group input {
+            flex: 1;
+            min-width: 0;
+            padding: 10px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border 0.2s ease;
+        }
+        .input-group input:focus {
+            outline: none;
+            border-color: #4a6bdf;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 25px;
+        }
+        .empty-state {
+            text-align: center;
+            color: #888;
+            padding: 30px 0;
+            font-size: 14px;
+        }
+        .color-option {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            margin-right: 8px;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+        .notification-toggle {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .notification-toggle label {
+            margin-left: 8px;
+            font-size: 14px;
+        }
+        @media (max-width: 480px) {
+            .event {
+                flex-direction: column;
+                align-items: flex-start;
+                padding-left: 20px;
+            }
+            .countdown {
+                margin: 10px 0;
+                align-self: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>行事カウントダウン</h1>
+    
+    <div class="notification-toggle">
+        <input type="checkbox" id="enableNotifications">
+        <label for="enableNotifications">朝6時に通知を受け取る</label>
+    </div>
+    
+    <div class="input-group">
+        <input type="text" id="eventName" placeholder="行事名">
+        <input type="date" id="eventDate">
+        <button class="add-btn" onclick="addEvent()">
+            <span class="add-icon">＋</span>
+            <span>追加</span>
+        </button>
+    </div>
+    
+    <div id="eventsList"></div>
+    
+    <script>
+        let events = JSON.parse(localStorage.getItem('events')) || [];
+        let notificationTimer = null;
+        
+        // デフォルトカラーリスト
+        const defaultColors = [
+            '#4a6bdf', // 青
+            '#e74c3c', // 赤
+            '#2ecc71', // 緑
+            '#f39c12', // オレンジ
+            '#9b59b6', // 紫
+            '#1abc9c', // ターコイズ
+            '#e67e22', // カボチャ
+            '#3498db', // 明るい青
+            '#d35400', // 茶色
+            '#27ae60'  // 濃い緑
+        ];
+        
+        // 初期化時に通知許可をリクエスト
+        document.addEventListener('DOMContentLoaded', function() {
+            if (localStorage.getItem('notificationsEnabled') === 'true') {
+                document.getElementById('enableNotifications').checked = true;
+                setupNotifications();
+            }
+            
+            // 通知トグル変更イベント
+            document.getElementById('enableNotifications').addEventListener('change', function() {
+                if (this.checked) {
+                    requestNotificationPermission();
+                } else {
+                    clearNotifications();
+                    localStorage.setItem('notificationsEnabled', 'false');
+                }
+            });
+        });
+        
+        // 通知許可をリクエスト
+        function requestNotificationPermission() {
+            if (!("Notification" in window)) {
+                alert("このブラウザは通知をサポートしていません");
+                return;
+            }
+            
+            Notification.requestPermission().then(function(permission) {
+                if (permission === "granted") {
+                    localStorage.setItem('notificationsEnabled', 'true');
+                    setupNotifications();
+                    showNotification('通知が有効になりました', '毎朝6時にイベントをお知らせします');
+                }
+            });
+        }
+        
+        // 通知設定
+        function setupNotifications() {
+            clearNotifications();
+            
+            // 次の朝6時を計算
+            const now = new Date();
+            let next6am = new Date();
+            next6am.setHours(6, 0, 0, 0);
+            
+            if (now >= next6am) {
+                next6am.setDate(next6am.getDate() + 1);
+            }
+            
+            const timeUntil6am = next6am - now;
+            
+            // タイマー設定
+            notificationTimer = setTimeout(function() {
+                sendDailyNotifications();
+                // 24時間ごとに繰り返し
+                notificationTimer = setInterval(sendDailyNotifications, 24 * 60 * 60 * 1000);
+            }, timeUntil6am);
+        }
+        
+        // 毎朝の通知送信
+        function sendDailyNotifications() {
+            if (!document.getElementById('enableNotifications').checked) return;
+            
+            const now = new Date();
+            const todayEvents = events.filter(event => {
+                const eventDate = new Date(event.date);
+                const diffDays = Math.ceil((eventDate - now) / (1000 * 60 * 60 * 24));
+                return diffDays >= 0 && diffDays <= 7; // 1週間以内のイベントのみ通知
+            });
+            
+            // 日付順にソート
+            todayEvents.sort((a, b) => {
+                return new Date(a.date) - new Date(b.date);
+            });
+            
+            if (todayEvents.length > 0) {
+                const eventText = todayEvents.map(event => {
+                    const eventDate = new Date(event.date);
+                    const diffDays = Math.ceil((eventDate - now) / (1000 * 60 * 60 * 24));
+                    return `${event.name}まであと${diffDays}日 (${eventDate.toLocaleDateString()})`;
+                }).join('\n');
+                
+                showNotification('近づいている行事', eventText);
+            }
+        }
+        
+        // 通知を表示
+        function showNotification(title, body) {
+            if (Notification.permission === "granted") {
+                new Notification(title, { body });
+            }
+        }
+        
+        // 通知をクリア
+        function clearNotifications() {
+            if (notificationTimer) {
+                clearTimeout(notificationTimer);
+                clearInterval(notificationTimer);
+                notificationTimer = null;
+            }
+        }
+        
+        // メニューを表示/非表示
+        function toggleMenu(menuId) {
+            const menu = document.getElementById(menuId);
+            const allMenus = document.querySelectorAll('.menu-options');
+            
+            allMenus.forEach(m => {
+                if (m.id !== menuId) m.style.display = 'none';
+            });
+            
+            menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+        }
+        
+        // メニュー以外をクリックで閉じる
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.menu-btn') && !e.target.closest('.menu-options')) {
+                document.querySelectorAll('.menu-options').forEach(menu => {
+                    menu.style.display = 'none';
+                });
+            }
+        });
+        
+        function updateEvents() {
+            const now = new Date();
+            const eventsList = document.getElementById('eventsList');
+            eventsList.innerHTML = '';
+            
+            // マイナス日数のイベントをフィルタリング
+            let hasExpiredEvents = false;
+            const updatedEvents = events.filter(event => {
+                const eventDate = new Date(event.date);
+                const diffTime = eventDate - now;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                return diffDays >= 0;
+            });
+            
+            if (updatedEvents.length !== events.length) {
+                hasExpiredEvents = true;
+                events = updatedEvents;
+                localStorage.setItem('events', JSON.stringify(events));
+            }
+            
+            if (hasExpiredEvents && events.length === 0) {
+                eventsList.innerHTML = '<div class="empty-state">行事が登録されていません</div>';
+                return;
+            }
+            
+            // 日付順にソート
+            const sortedEvents = [...events].sort((a, b) => {
+                return new Date(a.date) - new Date(b.date);
+            });
+            
+            sortedEvents.forEach((event, index) => {
+                const eventDate = new Date(event.date);
+                const diffTime = eventDate - now;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                const countdownText = diffDays === 0 ? "当日" : `あと${diffDays}日`;
+                const isToday = diffDays === 0;
+                
+                const eventDiv = document.createElement('div');
+                eventDiv.className = 'event';
+                eventDiv.style.borderLeftColor = event.color || defaultColors[index % defaultColors.length];
+                eventDiv.innerHTML = `
+                    <div class="event-info">
+                        <h3>${event.name}</h3>
+                        <div class="event-date">${eventDate.toLocaleDateString()}</div>
+                    </div>
+                    <div class="countdown ${isToday ? 'today' : ''}" style="color: ${event.color || defaultColors[index % defaultColors.length]}">${countdownText}</div>
+                    <button class="menu-btn" onclick="toggleMenu('menu-${index}')">⋯</button>
+                    <div id="menu-${index}" class="menu-options">
+                        <div class="menu-option" onclick="copyCountdown(${index})">
+                            <span class="menu-option-icon">⎘</span>
+                            <span>コピー</span>
+                        </div>
+                        <div class="menu-option" onclick="changeColor(${index})">
+                            <span class="menu-option-icon">
+                                <div class="color-option" style="background: ${event.color || defaultColors[index % defaultColors.length]}"></div>
+                            </span>
+                            <span>色を変更</span>
+                        </div>
+                        <div class="menu-option" onclick="deleteEvent(${index})" style="color: #e74c3c;">
+                            <span class="menu-option-icon">×</span>
+                            <span>削除</span>
+                        </div>
+                    </div>
+                `;
+                eventsList.appendChild(eventDiv);
+            });
+        }
+        
+        function addEvent() {
+            const name = document.getElementById('eventName').value;
+            const date = document.getElementById('eventDate').value;
+            
+            if (name && date) {
+                events.push({ 
+                    name, 
+                    date,
+                    color: defaultColors[events.length % defaultColors.length]
+                });
+                localStorage.setItem('events', JSON.stringify(events));
+                document.getElementById('eventName').value = '';
+                updateEvents();
+                
+                // 通知が有効な場合、すぐに通知を送信
+                if (document.getElementById('enableNotifications').checked) {
+                    const eventDate = new Date(date);
+                    const now = new Date();
+                    const diffDays = Math.ceil((eventDate - now) / (1000 * 60 * 60 * 24));
+                    
+                    if (diffDays >= 0) {
+                        showNotification('行事を追加しました', `${name}まであと${diffDays}日`);
+                    }
+                }
+            } else {
+                alert('行事名と日付を入力してください');
+            }
+        }
+        
+        function deleteEvent(index) {
+            if (confirm('この行事を削除しますか？')) {
+                // ソート前の元の配列から削除するために、ソート順のindexを元のindexに変換
+                const sortedEvents = [...events].sort((a, b) => new Date(a.date) - new Date(b.date));
+                const eventToDelete = sortedEvents[index];
+                const originalIndex = events.findIndex(e => e === eventToDelete);
+                
+                if (originalIndex !== -1) {
+                    events.splice(originalIndex, 1);
+                    localStorage.setItem('events', JSON.stringify(events));
+                    updateEvents();
+                }
+            }
+            document.querySelectorAll('.menu-options').forEach(menu => {
+                menu.style.display = 'none';
+            });
+        }
+        
+        function copyCountdown(index) {
+            const sortedEvents = [...events].sort((a, b) => new Date(a.date) - new Date(b.date));
+            const event = sortedEvents[index];
+            const eventDate = new Date(event.date);
+            const now = new Date();
+            const diffTime = eventDate - now;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            const countdownText = diffDays === 0 ? "当日" : `あと${diffDays}日`;
+            const textToCopy = `${event.name}は${countdownText} (${eventDate.toLocaleDateString()})`;
+            
+            navigator.clipboard.writeText(textToCopy)
+                .then(() => {
+                    alert('クリップボードにコピーしました: ' + textToCopy);
+                })
+                .catch(err => {
+                    console.error('コピーに失敗しました:', err);
+                    // フォールバック
+                    const textarea = document.createElement('textarea');
+                    textarea.value = textToCopy;
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textarea);
+                    alert('クリップボードにコピーしました: ' + textToCopy);
+                });
+            
+            document.querySelectorAll('.menu-options').forEach(menu => {
+                menu.style.display = 'none';
+            });
+        }
+        
+        function changeColor(index) {
+            const sortedEvents = [...events].sort((a, b) => new Date(a.date) - new Date(b.date));
+            const event = sortedEvents[index];
+            const originalIndex = events.findIndex(e => e === event);
+            
+            if (originalIndex !== -1) {
+                const newColor = prompt('新しい色を入力してください (例: #4a6bdf または blue)', 
+                    events[originalIndex].color || defaultColors[originalIndex % defaultColors.length]);
+                
+                if (newColor) {
+                    events[originalIndex].color = newColor;
+                    localStorage.setItem('events', JSON.stringify(events));
+                    updateEvents();
+                }
+            }
+            
+            document.querySelectorAll('.menu-options').forEach(menu => {
+                menu.style.display = 'none';
+            });
+        }
+        
+        // 初期表示
+        updateEvents();
+        
+        // 今日の日付をデフォルトで入力
+        document.getElementById('eventDate').valueAsDate = new Date();
+    </script>
+</body>
+</html>
