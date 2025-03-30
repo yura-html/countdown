@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>行事カウントダウン</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root {
+            --bg-color: #f8f9fa;
+            --text-color: #333;
+            --event-bg: white;
+            --event-border: #e0e0e0;
+            --shadow-color: rgba(0,0,0,0.05);
+            --hover-shadow: rgba(0,0,0,0.1);
+            --menu-bg: white;
+            --menu-border: #e0e0e0;
+            --menu-hover: #f8f8f8;
+            --add-btn: #4a6bdf;
+            --add-btn-hover: #3a5bd9;
+            --input-border: #e0e0e0;
+            --input-focus: #4a6bdf;
+        }
+
+        .dark-mode {
+            --bg-color: #121212;
+            --text-color: #e0e0e0;
+            --event-bg: #1e1e1e;
+            --event-border: #333;
+            --shadow-color: rgba(0,0,0,0.2);
+            --hover-shadow: rgba(0,0,0,0.3);
+            --menu-bg: #2d2d2d;
+            --menu-border: #444;
+            --menu-hover: #383838;
+            --add-btn: #5a7bef;
+            --add-btn-hover: #4a6bdf;
+            --input-border: #444;
+            --input-focus: #5a7bef;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .event {
+            position: relative;
+            margin: 15px 0;
+            padding: 15px 15px 15px 25px;
+            border: 1px solid var(--event-border);
+            border-radius: 10px;
+            background-color: var(--event-bg);
+            box-shadow: 0 1px 3px var(--shadow-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s ease;
+            border-left: 5px solid #4a6bdf;
+        }
+
+        .event:hover {
+            box-shadow: 0 2px 6px var(--hover-shadow);
+        }
+
+        .event-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .event-info h3 {
+            margin: 0 0 5px 0;
+            font-size: 16px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .event-date {
+            color: #666;
+            font-size: 13px;
+        }
+
+        .countdown {
+            font-size: 22px;
+            font-weight: 600;
+            margin: 0 15px;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .today {
+            color: #e74c3c;
+            font-weight: 700;
+        }
+
+        .menu-btn {
+            background: none;
+            border: none;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            cursor: pointer;
+            color: #888;
+            transition: all 0.2s ease;
+        }
+
+        .menu-btn:hover {
+            background-color: rgba(0,0,0,0.1);
+            color: var(--text-color);
+        }
+
+        .menu-options {
+            display: none;
+            position: absolute;
+            top: 40px;
+            right: 10px;
+            background: var(--menu-bg);
+            border: 1px solid var(--menu-border);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px var(--hover-shadow);
+            z-index: 10;
+            min-width: 140px;
+            overflow: hidden;
+        }
+
+        .menu-option {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--text-color);
+            border-bottom: 1px solid var(--menu-border);
+        }
+
+        .menu-option:last-child {
+            border-bottom: none;
+        }
+
+        .menu-option:hover {
+            background-color: var(--menu-hover);
+        }
+
+        .menu-option-icon {
+            margin-right: 8px;
+            width: 16px;
+            text-align: center;
+        }
+
+        .add-btn {
+            background-color: var(--add-btn);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .add-btn:hover {
+            background-color: var(--add-btn-hover);
+        }
+
+        .add-icon {
+            margin-right: 6px;
+            font-size: 16px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .input-group input {
+            flex: 1;
+            min-width: 0;
+            padding: 10px 12px;
+            border: 1px solid var(--input-border);
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border 0.2s ease;
+            background-color: var(--event-bg);
+            color: var(--text-color);
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--input-focus);
+        }
+
+        h1 {
+            color: var(--text-color);
+            text-align: center;
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 25px;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #888;
+            padding: 30px 0;
+            font-size: 14px;
+        }
+
+        .color-option {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            margin-right: 8px;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .header-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .theme-toggle {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 20px;
+            color: var(--text-color);
+            padding: 5px;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+
+        .theme-toggle:hover {
+            background-color: rgba(0,0,0,0.1);
+        }
+
+        .sort-options {
+            display: flex;
+            gap: 10px;
+        }
+
+        .sort-btn {
+            background: none;
+            border: 1px solid var(--input-border);
+            border-radius: 8px;
+            padding: 5px 10px;
+            font-size: 12px;
+            cursor: pointer;
+            color: var(--text-color);
+            transition: all 0.2s ease;
+        }
+
+        .sort-btn.active {
+            background-color: var(--add-btn);
+            color: white;
+            border-color: var(--add-btn);
+        }
+
+        .sort-btn:hover {
+            background-color: rgba(0,0,0,0.1);
+        }
+
+        @media (max-width: 480px) {
+            .event {
+                flex-direction: column;
+                align-items: flex-start;
+                padding-left: 20px;
+            }
+            .countdown {
+                margin: 10px 0;
+                align-self: flex-start;
+            }
+            .header-actions {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            .sort-options {
+                width: 100%;
+                justify-content: space-between;
+            }
+            .sort-btn {
+                flex: 1;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header-actions">
+        <button class="theme-toggle" id="themeToggle">🌓</button>
+        <div class="sort-options">
+            <button class="sort-btn active" id="sortDate">日付順</button>
+            <button class="sort-btn" id="sortDays">日数順</button>
+            <button class="sort-btn" id="sortName">名前順</button>
+        </div>
+    </div>
+    
+    <h1>行事カウントダウン</h1>
+    
+    <div class="input-group">
+        <input type="text" id="eventName" placeholder="行事名">
+        <input type="date" id="eventDate">
+        <button class="add-btn" onclick="addEvent()">
+            <span class="add-icon">＋</span>
+            <span>追加</span>
+        </button>
+    </div>
+    
+    <div id="eventsList"></div>
+    
+    <script>
+        let events = JSON.parse(localStorage.getItem('events')) || [];
+        let currentSort = 'date'; // 'date', 'days', 'name'
+        
+        // デフォルトカラーリスト
+        const defaultColors = [
+            '#4a6bdf', // 青
+            '#e74c3c', // 赤
+            '#2ecc71', // 緑
+            '#f39c12', // オレンジ
+            '#9b59b6', // 紫
+            '#1abc9c', // ターコイズ
+            '#e67e22', // カボチャ
+            '#3498db', // 明るい青
+            '#d35400', // 茶色
+            '#27ae60'  // 濃い緑
+        ];
+        
+        // 初期化
+        function init() {
+            // ダークモード設定をチェック
+            if (localStorage.getItem('darkMode') {
+                document.body.classList.add('dark-mode');
+                document.getElementById('themeToggle').textContent = '🌞';
+            }
+            
+            // 通知許可をリクエスト
+            if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+                Notification.requestPermission();
+            }
+            
+            // ソートボタンのイベントリスナー
+            document.getElementById('sortDate').addEventListener('click', () => changeSort('date'));
+            document.getElementById('sortDays').addEventListener('click', () => changeSort('days'));
+            document.getElementById('sortName').addEventListener('click', () => changeSort('name'));
+            
+            // テーマトグルボタン
+            document.getElementById('themeToggle').addEventListener('click', toggleDarkMode);
+            
+            updateEvents();
+            checkNotifications();
+            
+            // 今日の日付をデフォルトで入力
+            document.getElementById('eventDate').valueAsDate = new Date();
+            
+            // 1分ごとに通知をチェック
+            setInterval(checkNotifications, 60000);
+        }
+        
+        // ダークモード切り替え
+        function toggleDarkMode() {
+            const body = document.body;
+            const themeToggle = document.getElementById('themeToggle');
+            
+            body.classList.toggle('dark-mode');
+            
+            if (body.classList.contains('dark-mode')) {
+                themeToggle.textContent = '🌞';
+                localStorage.setItem('darkMode', 'enabled');
+            } else {
+                themeToggle.textContent = '🌓';
+                localStorage.removeItem('darkMode');
+            }
+        }
+        
+        // ソート方法変更
+        function changeSort(sortBy) {
+            currentSort = sortBy;
+            
+            // ボタンのactive状態を更新
+            document.querySelectorAll('.sort-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(`sort${sortBy.charAt(0).toUpperCase() + sortBy.slice(1)}`).classList.add('active');
+            
+            updateEvents();
+        }
+        
+        // メニューを表示/非表示
+        function toggleMenu(menuId) {
+            const menu = document.getElementById(menuId);
+            const allMenus = document.querySelectorAll('.menu-options');
+            
+            allMenus.forEach(m => {
+                if (m.id !== menuId) m.style.display = 'none';
+            });
+            
+            menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+        }
+        
+        // メニュー以外をクリックで閉じる
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.menu-btn') && !e.target.closest('.menu-options')) {
+                document.querySelectorAll('.menu-options').forEach(menu => {
+                    menu.style.display = 'none';
+                });
+            }
+        });
+        
+        // イベントを更新
+        function updateEvents() {
+            const now = new Date();
+            const eventsList = document.getElementById('eventsList');
+            eventsList.innerHTML = '';
+            
+            if (events.length === 0) {
+                eventsList.innerHTML = '<div class="empty-state">行事が登録されていません</div>';
+                return;
+            }
+            
+            // マイナス日数のイベントをフィルタリング
+            let hasExpiredEvents = false;
+            const updatedEvents = events.filter(event => {
+                const eventDate = new Date(event.date);
+                const diffTime = eventDate - now;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                return diffDays >= 0;
+            });
+            
+            if (updatedEvents.length !== events.length) {
+                hasExpiredEvents = true;
+                events = updatedEvents;
+                localStorage.setItem('events', JSON.stringify(events));
+            }
+            
+            if (hasExpiredEvents && events.length === 0) {
+                eventsList.innerHTML = '<div class="empty-state">行事が登録されていません</div>';
+                return;
+            }
+            
+            // イベントをソート
+            const sortedEvents = [...events].sort((a, b) => {
+                const dateA = new Date(a.date);
+                const dateB = new Date(b.date);
+                const now = new Date();
+                const diffDaysA = Math.ceil((dateA - now) / (1000 * 60 * 60 * 24));
+                const diffDaysB = Math.ceil((dateB - now) / (1000 * 60 * 60 * 24));
+                
+                switch(currentSort) {
+                    case 'days':
+                        return diffDaysA - diffDaysB;
+                    case 'name':
+                        return a.name.localeCompare(b.name);
+                    case 'date':
+                    default:
+                        return dateA - dateB;
+                }
+            });
+            
+            sortedEvents.forEach((event, index) => {
+                const eventDate = new Date(event.date);
+                const diffTime = eventDate - now;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                const countdownText = diffDays === 0 ? "当日" : `あと${diffDays}日`;
+                const isToday = diffDays === 0;
+                
+                const eventDiv = document.createElement('div');
+                eventDiv.className = 'event';
+                eventDiv.style.borderLeftColor = event.color || defaultColors[index % defaultColors.length];
+                eventDiv.innerHTML = `
+                    <div class="event-info">
+                        <h3>${event.name}</h3>
+                        <div class="event-date">${eventDate.toLocaleDateString()}</div>
+                    </div>
+                    <div class="countdown ${isToday ? 'today' : ''}" style="color: ${event.color || defaultColors[index % defaultColors.length]}">${countdownText}</div>
+                    <button class="menu-btn" onclick="toggleMenu('menu-${index}')">⋯</button>
+                    <div id="menu-${index}" class="menu-options">
+                        <div class="menu-option" onclick="copyCountdown(${index})">
+                            <span class="menu-option-icon">⎘</span>
+                            <span>コピー</span>
+                        </div>
+                        <div class="menu-option" onclick="changeColor(${index})">
+                            <span class="menu-option-icon">
+                                <div class="color-option" style="background: ${event.color || defaultColors[index % defaultColors.length]}"></div>
+                            </span>
+                            <span>色を変更</span>
+                        </div>
+                        <div class="menu-option" onclick="deleteEvent(${index})" style="color: #e74c3c;">
+                            <span class="menu-option-icon">×</span>
+                            <span>削除</span>
+                        </div>
+                    </div>
+                `;
+                eventsList.appendChild(eventDiv);
+            });
+        }
+        
+        // 通知をチェック
+        function checkNotifications() {
+            if (Notification.permission !== 'granted') return;
+            
+            const now = new Date();
+            const twoWeeksLater = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+            
+            events.forEach(event => {
+                const eventDate = new Date(event.date);
+                const diffTime = eventDate - now;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                // 2週間以内のイベントでまだ通知していないもの
+                if (diffDays > 0 && diffDays <= 14 && !event.notified) {
+                    // 通知時間を設定（当日の午前9時）
+                    const notifyTime = new Date(event.date);
+                    notifyTime.setHours(9, 0, 0, 0);
+                    
+                    // 通知がまだであれば送信
+                    if (now >= notifyTime) {
+                        new Notification(`${event.name}が近づいています`, {
+                            body: `あと${diffDays}日 (${eventDate.toLocaleDateString()})`,
+                            icon: 'https://cdn-icons-png.flaticon.com/512/3652/3652191.png'
+                        });
+                        
+                        // 通知済みフラグを設定
+                        event.notified = true;
+                        localStorage.setItem('events', JSON.stringify(events));
+                    }
+                }
+            });
+        }
+        
+        function addEvent() {
+            const name = document.getElementById('eventName').value.trim();
+            const date = document.getElementById('eventDate').value;
+            
+            if (!name) {
+                alert('行事名を入力してください');
+                return;
+            }
+            if (name.length > 50) {
+                alert('行事名は50文字以内で入力してください');
+                return;
+            }
+            if (!date) {
+                alert('日付を選択してください');
+                return;
+            }
+            
+            events.push({ 
+                name, 
+                date,
+                color: defaultColors[events.length % defaultColors.length],
+                notified: false
+            });
+            localStorage.setItem('events', JSON.stringify(events));
+            document.getElementById('eventName').value = '';
+            updateEvents();
+            checkNotifications();
+        }
+        
+        function deleteEvent(index) {
+            if (confirm('この行事を削除しますか？')) {
+                events.splice(index, 1);
+                localStorage.setItem('events', JSON.stringify(events));
+                updateEvents();
+            }
+            document.querySelectorAll('.menu-options').forEach(menu => {
+                menu.style.display = 'none';
+            });
+        }
+        
+        function copyCountdown(index) {
+            const event = events[index];
+            const eventDate = new Date(event.date);
+            const now = new Date();
+            const diffTime = eventDate - now;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            const countdownText = diffDays === 0 ? "当日" : `あと${diffDays}日`;
+            const textToCopy = `${event.name}は${countdownText} (${eventDate.toLocaleDateString()})`;
+            
+            navigator.clipboard.writeText(textToCopy)
+                .then(() => {
+                    alert('クリップボードにコピーしました: ' + textToCopy);
+                })
+                .catch(err => {
+                    console.error('コピーに失敗しました:', err);
+                    // フォールバック
+                    const textarea = document.createElement('textarea');
+                    textarea.value = textToCopy;
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textarea);
+                    alert('クリップボードにコピーしました: ' + textToCopy);
+                });
+            
+            document.querySelectorAll('.menu-options').forEach(menu => {
+                menu.style.display = 'none';
+            });
+        }
+        
+        function changeColor(index) {
+            const newColor = prompt('新しい色を入力してください (例: #4a6bdf または blue)', events[index].color || defaultColors[index % defaultColors.length]);
+            if (newColor) {
+                events[index].color = newColor;
+                localStorage.setItem('events', JSON.stringify(events));
+                updateEvents();
+            }
+            document.querySelectorAll('.menu-options').forEach(menu => {
+                menu.style.display = 'none';
+            });
+        }
+        
+        // 初期化を実行
+        init();
+    </script>
+</body>
+</html>
